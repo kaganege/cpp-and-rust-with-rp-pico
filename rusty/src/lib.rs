@@ -9,6 +9,6 @@ mod panic_handler;
 mod print;
 
 #[no_mangle]
-pub unsafe extern "C" fn hello_from_rust() {
+pub extern "C" fn hello_from_rust() {
   println!("Hello from Rust!");
 }
