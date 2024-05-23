@@ -18,9 +18,9 @@ int main()
   {
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, true);
     hello_from_rust();
-    sleep_ms(1000);
+    sleep_ms(500);
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, false);
     hello_from_rust();
-    sleep_ms(1000);
+    sleep_ms(500);
   }
 }
