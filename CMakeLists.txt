@@ -23,7 +23,13 @@ if(WIN32)
     include(${pico-sdk-tools_DIR}/pico-sdk-tools-config-version.cmake)
 endif()
 # ====================================================================================
+
+{% if board_type == "Pico" %}
+set(PICO_BOARD pico CACHE STRING "Board type")
+{% else %}
 set(PICO_BOARD pico_w CACHE STRING "Board type")
+{% endif %}
+
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
@@ -32,28 +38,39 @@ if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
   message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
-project(cpp-and-rust-with-pico C CXX ASM)
+project({{ crate_name }} C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(cpp-and-rust-with-pico main.cpp )
+add_executable({{ crate_name }} main.cpp )
 
-pico_set_program_name(cpp-and-rust-with-pico "cpp-and-rust-with-pico")
-pico_set_program_version(cpp-and-rust-with-pico "0.1")
+pico_set_program_name({{ crate_name }} "{{ crate_name }}")
+pico_set_program_version({{ crate_name }} "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(cpp-and-rust-with-pico 0)
-pico_enable_stdio_usb(cpp-and-rust-with-pico 1)
+{% if stdio == "Both" or stdio == "Over UART" %}
+pico_enable_stdio_uart({{ crate_name }} 1)
+{% else %}
+pico_enable_stdio_uart({{ crate_name }} 0)
+{% endif %}
+
+{% if stdio == "Both" or stdio == "Over USB" %}
+pico_enable_stdio_usb({{ crate_name }} 1)
+{% else %}
+pico_enable_stdio_usb({{ crate_name }} 0)
+{% endif %}
+
 
 # Add the standard library to the build
-target_link_libraries(cpp-and-rust-with-pico
-        pico_stdlib)
+target_link_libraries({{ crate_name }}
+  pico_stdlib
+)
 
 # Add the standard include files to the build
-target_include_directories(cpp-and-rust-with-pico PRIVATE
+target_include_directories({{ crate_name }} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )
@@ -64,9 +81,12 @@ execute_process(
 )
 
 # Add any user requested libraries
-target_link_libraries(cpp-and-rust-with-pico
-        pico_cyw43_arch_none
-        ${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/release/librusty.a
-        )
+target_link_libraries({{ crate_name }}
+  {% if board_type == "Pico W" %}
+  pico_cyw43_arch_none
+  {% endif %}
 
-pico_add_extra_outputs(cpp-and-rust-with-pico)
+  ${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/release/librusty.a
+)
+
+pico_add_extra_outputs({{ crate_name }})

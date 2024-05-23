@@ -1,0 +1,15 @@
+[template]
+cargo_generate_version = ">=0.18"
+ignore = [".git"]
+
+[placeholders.board_type]
+type = "string"
+prompt = "Board Type"
+choices = ["Pico", "Pico W"]
+default = "Pico"
+
+[placeholders.stdio]
+type = "string"
+prompt = "Enable Standart IO"
+choices = ["Over USB", "Over UART", "Both", "No"]
+default = "Over USB"

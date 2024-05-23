@@ -1,4 +1,4 @@
-# C++ and Rust With Raspberry Pi Pico W
+# {{ project-name }}
 
 > [!NOTE]
 > This project only works with Visual Studio Code.
