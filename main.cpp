@@ -14,11 +14,12 @@ int main()
     return -1;
   }
 
-  // Example to turn on the Pico W LED
-  cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
-
   while (true)
   {
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, true);
+    hello_from_rust();
+    sleep_ms(1000);
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, false);
     hello_from_rust();
     sleep_ms(1000);
   }
