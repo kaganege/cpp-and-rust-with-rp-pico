@@ -35,36 +35,36 @@ if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
   message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
-project({{ crate_name }} C CXX ASM)
+project({{ project-name }} C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable({{ crate_name }} main.cpp )
+add_executable({{ project-name }} main.cpp )
 
-pico_set_program_name({{ crate_name }} "{{ crate_name }}")
-pico_set_program_version({{ crate_name }} "0.1")
+pico_set_program_name({{ project-name }} "{{ project-name }}")
+pico_set_program_version({{ project-name }} "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
 {% if stdio == "Both" or stdio == "Over UART" %}
-pico_enable_stdio_uart({{ crate_name }} 1)
+pico_enable_stdio_uart({{ project-name }} 1)
 {% else %}
-pico_enable_stdio_uart({{ crate_name }} 0)
+pico_enable_stdio_uart({{ project-name }} 0)
 {% endif %}
 {% if stdio == "Both" or stdio == "Over USB" %}
-pico_enable_stdio_usb({{ crate_name }} 1)
+pico_enable_stdio_usb({{ project-name }} 1)
 {% else %}
-pico_enable_stdio_usb({{ crate_name }} 0)
+pico_enable_stdio_usb({{ project-name }} 0)
 {% endif %}
 # Add the standard library to the build
-target_link_libraries({{ crate_name }}
+target_link_libraries({{ project-name }}
   pico_stdlib
 )
 
 # Add the standard include files to the build
-target_include_directories({{ crate_name }} PRIVATE
+target_include_directories({{ project-name }} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )
@@ -75,11 +75,11 @@ execute_process(
 )
 
 # Add any user requested libraries
-target_link_libraries({{ crate_name }}
+target_link_libraries({{ project-name }}
   {% if board_type == "Pico W" %}
   pico_cyw43_arch_none
   {% endif %}
   ${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/release/librusty.a
 )
 
-pico_add_extra_outputs({{ crate_name }})
+pico_add_extra_outputs({{ project-name }})
