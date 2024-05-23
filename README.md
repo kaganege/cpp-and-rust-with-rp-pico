@@ -10,7 +10,7 @@ Follow [this](https://github.com/kaganege/cpp-and-rust-with-rp-pico/blob/templat
 
 ### Use Git
 
-You can clone [main](https://github.com/kaganege/cpp-and-rust-with-rp-pico/tree/main) branch by git:
+You can clone [main](https://github.com/kaganege/cpp-and-rust-with-rp-pico/tree/main) branch by [git](https://git-scm.com/):
 
 ```sh
 git clone https://github.com/kaganege/cpp-and-rust-with-rp-pico.git
