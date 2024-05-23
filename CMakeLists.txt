@@ -23,14 +23,11 @@ if(WIN32)
     include(${pico-sdk-tools_DIR}/pico-sdk-tools-config-version.cmake)
 endif()
 # ====================================================================================
-
 {% if board_type == "Pico" %}
 set(PICO_BOARD pico CACHE STRING "Board type")
 {% else %}
 set(PICO_BOARD pico_w CACHE STRING "Board type")
 {% endif %}
-
-
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
@@ -56,14 +53,11 @@ pico_enable_stdio_uart({{ crate_name }} 1)
 {% else %}
 pico_enable_stdio_uart({{ crate_name }} 0)
 {% endif %}
-
 {% if stdio == "Both" or stdio == "Over USB" %}
 pico_enable_stdio_usb({{ crate_name }} 1)
 {% else %}
 pico_enable_stdio_usb({{ crate_name }} 0)
 {% endif %}
-
-
 # Add the standard library to the build
 target_link_libraries({{ crate_name }}
   pico_stdlib
@@ -85,7 +79,6 @@ target_link_libraries({{ crate_name }}
   {% if board_type == "Pico W" %}
   pico_cyw43_arch_none
   {% endif %}
-
   ${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/release/librusty.a
 )
 
