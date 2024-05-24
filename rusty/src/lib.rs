@@ -3,7 +3,10 @@
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-mod alloc;
+#[macro_use]
+extern crate alloc;
+
+mod allocator;
 mod ctypes;
 mod panic_handler;
 mod print;
