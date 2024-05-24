@@ -1,6 +1,8 @@
 use crate::*;
 use core::panic::PanicInfo;
 
+const AIRCR_REGISTER: *mut u32 = (0xe0000000u32 + 0x0ED0C) as _;
+
 unsafe fn hardware_reset() {
   *AIRCR_REGISTER = 0x5FA0004;
 }
