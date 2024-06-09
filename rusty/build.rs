@@ -1,5 +1,6 @@
-use std::env;
 use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::{env, fs};
 
 extern crate bindgen;
 extern crate cbindgen;
@@ -17,6 +18,7 @@ fn main() {
 
   let current_dir = env::current_dir().unwrap();
   let project_path = current_dir.parent().unwrap();
+  let build_path = project_path.join("build");
 
   let mut args: Vec<String> = vec![
     format!(
@@ -25,11 +27,7 @@ fn main() {
     ),
     format!(
       "-I{}",
-      project_path
-        .join("build")
-        .join("generated")
-        .join("pico_base")
-        .display()
+      build_path.join("generated").join("pico_base").display()
     ),
     format!(
       "-I{}",
@@ -75,6 +73,16 @@ fn main() {
       .filter(|entry| entry.file_type().is_ok_and(|file_type| file_type.is_dir()))
       .map(|entry| format!("-I{}", entry.path().join("include").display())),
   );
+
+  if !build_path.exists() {
+    fs::create_dir(build_path).unwrap();
+  } else if build_path.read_dir().unwrap().count() <= 2 {
+    Command::new("cmake")
+      .arg("..")
+      .current_dir(build_path)
+      .output()
+      .unwrap();
+  }
 
   let bindings = bindgen::Builder::default()
     .use_core()

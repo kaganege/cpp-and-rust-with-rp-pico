@@ -69,17 +69,35 @@ target_include_directories({{ project-name }} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )
 
-execute_process(
-  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/rusty
+# Enable ExternalProject CMake module
+include(ExternalProject)
+
+# Set default ExternalProject root directory
+set_directory_properties(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/Rust)
+
+# Add Rust project
+ExternalProject_Add(rusty
+  BUILD_COMMAND cargo build
   COMMAND cargo build --release
+  BINARY_DIR "${CMAKE_SOURCE_DIR}/rusty"
+  LOG_BUILD ON
 )
+
+# execute_process(
+#   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/rusty
+#   COMMAND cargo build --release
+# )
+
+# Create dependency
+add_dependencies({{ project-name }} rusty)
 
 # Add any user requested libraries
 target_link_libraries({{ project-name }}
   {% if board_type == "Pico W" %}
   pico_cyw43_arch_none
   {% endif %}
-  ${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/release/librusty.a
+  debug "${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/debug/librusty.a"
+  optimized "${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/release/librusty.a"
 )
 
 pico_add_extra_outputs({{ project-name }})

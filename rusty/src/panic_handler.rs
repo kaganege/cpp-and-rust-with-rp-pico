@@ -9,6 +9,8 @@ unsafe fn hardware_reset() {
 
 #[panic_handler]
 fn panic(panic_info: &PanicInfo) -> ! {
+  cortex_m::interrupt::disable();
+
   if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
     eprintln!("panic occurred: {s:?}");
   } else {
