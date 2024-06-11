@@ -25,6 +25,22 @@ endif()
 # ====================================================================================
 set(PICO_BOARD pico_w CACHE STRING "Board type")
 
+set(CARGO_ARGS "build")
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(LIB_BUILD_TYPE "debug")
+elseif(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+  set(LIB_BUILD_TYPE "release")
+else()
+  set(LIB_BUILD_TYPE "debug")
+endif()
+
+if(${LIB_BUILD_TYPE} STREQUAL "release")
+  list(APPEND CARGO_ARGS "--release")
+endif()
+
+set(LIB_FILE "${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/${LIB_BUILD_TYPE}/librusty.a")
+
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
@@ -50,7 +66,8 @@ pico_enable_stdio_usb(cpp-and-rust-with-pico 1)
 
 # Add the standard library to the build
 target_link_libraries(cpp-and-rust-with-pico
-        pico_stdlib)
+  pico_stdlib
+)
 
 # Add the standard include files to the build
 target_include_directories(cpp-and-rust-with-pico PRIVATE
@@ -58,15 +75,28 @@ target_include_directories(cpp-and-rust-with-pico PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )
 
-execute_process(
+# Add Rust project
+add_custom_command(
+  OUTPUT ${LIB_FILE}
+  COMMAND cargo ARGS ${CARGO_ARGS}
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/rusty
-  COMMAND cargo build --release
+  COMMENT "running cargo"
 )
+
+# Create rust project
+add_custom_target(rusty ALL DEPENDS ${LIB_FILE})
+
+# Create dependency
+add_dependencies(cpp-and-rust-with-pico rusty)
+
+# Set target props
+set_target_properties(cpp-and-rust-with-pico PROPERTIES IMPORTED_LOCATION ${LIB_FILE})
 
 # Add any user requested libraries
 target_link_libraries(cpp-and-rust-with-pico
-        pico_cyw43_arch_none
-        ${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/release/librusty.a
-        )
+  pico_cyw43_arch_none
+  hardware_timer
+  ${LIB_FILE}
+)
 
 pico_add_extra_outputs(cpp-and-rust-with-pico)

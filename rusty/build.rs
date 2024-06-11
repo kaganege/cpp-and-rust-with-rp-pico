@@ -1,95 +1,112 @@
-use std::env;
 use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::{env, fs, io};
 
 extern crate bindgen;
 extern crate cbindgen;
 
-const PICO_SDK_PATH: &'static str = env!(
-  "PICO_SDK_PATH",
-  concat!(env!("USERPROFILE"), "/.pico-sdk/sdk/1.5.1")
-);
+#[cfg(windows)]
+const PICO_TOOLS_PATH: &'static str = concat!(env!("USERPROFILE"), r"\.pico-sdk");
+#[cfg(unix)]
+const PICO_TOOLS_PATH: &'static str = concat!(env!("HOME"), "/.pico-sdk");
+
+const PICO_SDK_VERSION: &'static str = "1.5.1";
 const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
 
 fn main() {
-  println!("cargo:rerun-if-changed=wrapper.h");
-  println!("cargo:rerun-if-changed=src/lib.rs");
-  println!("cargo:rerun-if-changed=../{PKG_NAME}.h");
+  let pico_tools_path = Path::new(PICO_TOOLS_PATH);
+  assert!(pico_tools_path.exists());
 
+  let pico_sdk_path = pico_tools_path.join("sdk").join(PICO_SDK_VERSION);
   let current_dir = env::current_dir().unwrap();
   let project_path = current_dir.parent().unwrap();
+  let build_path = project_path.join("build");
+  let output_file_path = project_path.join(format!("{PKG_NAME}.h"));
 
-  let mut args: Vec<String> = vec![
-    format!(
-      "-I{}/.pico-sdk/toolchain/13_2_Rel1/arm-none-eabi/include",
-      env!("USERPROFILE")
-    ),
-    format!(
-      "-I{}",
-      project_path
-        .join("build")
-        .join("generated")
-        .join("pico_base")
-        .display()
-    ),
-    format!(
-      "-I{}",
-      Path::new(PICO_SDK_PATH)
-        .join("src")
-        .join("boards")
-        .join("include")
-        .display()
-    ),
-    format!("-I{}", project_path.display()),
-  ];
-  let rp2_common = Path::new(PICO_SDK_PATH)
-    .join("src")
-    .join("rp2_common")
-    .read_dir()
-    .expect("rp2_common read_dir call failed");
-  let common = Path::new(PICO_SDK_PATH)
-    .join("src")
-    .join("common")
-    .read_dir()
-    .expect("common read_dir call failed");
-  let rp2040 = Path::new(PICO_SDK_PATH)
-    .join("src")
-    .join("rp2040")
-    .read_dir()
-    .expect("common read_dir call failed");
-
-  args.extend(
-    rp2_common
-      .filter_map(Result::ok)
-      .filter(|entry| entry.file_type().is_ok_and(|file_type| file_type.is_dir()))
-      .map(|entry| format!("-I{}", entry.path().join("include").display())),
-  );
-  args.extend(
-    common
-      .filter_map(Result::ok)
-      .filter(|entry| entry.file_type().is_ok_and(|file_type| file_type.is_dir()))
-      .map(|entry| format!("-I{}", entry.path().join("include").display())),
-  );
-  args.extend(
-    rp2040
-      .filter_map(Result::ok)
-      .filter(|entry| entry.file_type().is_ok_and(|file_type| file_type.is_dir()))
-      .map(|entry| format!("-I{}", entry.path().join("include").display())),
+  println!("cargo:rerun-if-changed=wrapper.h");
+  println!("cargo:rerun-if-changed=src/lib.rs");
+  println!("cargo:rerun-if-changed={}", output_file_path.display());
+  println!(
+    "cargo:rerun-if-changed={}",
+    build_path.join("generated").display()
   );
 
-  let bindings = bindgen::Builder::default()
+  if !build_path.exists() {
+    fs::create_dir(build_path.as_path()).unwrap();
+  }
+
+  if !build_path.join("compile_commands.json").exists() {
+    Command::new("cmake")
+      .args(["..", "-G", "Ninja"])
+      .current_dir(build_path.to_owned())
+      .output()
+      .unwrap();
+  }
+
+  let mut builder = bindgen::Builder::default()
+    // .raw_line("#![allow(non_upper_case_globals, non_camel_case_types, non_snake_case)]")
     .use_core()
+    .generate_comments(true)
     .generate_inline_functions(true)
     .ctypes_prefix("crate::ctypes")
     .disable_untagged_union()
     .prepend_enum_name(false)
     .layout_tests(false)
     .header("wrapper.h")
-    .clang_args(args)
-    .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-    .generate()
-    .expect("Unable to generate bindings");
+    .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
+  // C:\Users\kagan\.pico-sdk\toolchain\13_2_Rel1\arm-none-eabi\include
+  builder = builder.clang_args([
+    format!(
+      "-I{}",
+      pico_tools_path
+        .join("toolchain")
+        .join("13_2_Rel1")
+        .join("arm-none-eabi")
+        .join("include")
+        .display()
+    ),
+    format!(
+      "-I{}",
+      build_path.join("generated").join("pico_base").display()
+    ),
+    format!(
+      "-I{}",
+      pico_sdk_path
+        .join("src")
+        .join("boards")
+        .join("include")
+        .display()
+    ),
+    format!("-I{}", project_path.display()),
+  ]);
+  builder = builder.clang_args(
+    include_dir(pico_sdk_path.join("src").join("rp2_common"))
+      .inspect(|rp2_common| {
+        dbg!(rp2_common);
+      })
+      .expect("rp2_common read_dir call failed"),
+  );
+  builder = builder.clang_args(
+    include_dir(pico_sdk_path.join("src").join("common"))
+      .inspect(|common| {
+        dbg!(common);
+      })
+      .expect("common read_dir call failed"),
+  );
+  builder = builder.clang_args(
+    include_dir(pico_sdk_path.join("src").join("rp2040"))
+      .inspect(|rp2040| {
+        dbg!(rp2040);
+      })
+      .expect("rp2040 read_dir call failed"),
+  );
+
+  eprintln!("Builder: {builder:?}");
+
+  let bindings = builder.generate().expect("Unable to generate bindings");
   let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+
   bindings
     .write_to_file(out_path.join("bindings.rs"))
     .expect("Couldn't write bindings!");
@@ -107,5 +124,22 @@ fn main() {
       _ => panic!("{:?}", e),
     },
   }
-  .write_to_file(format!("../{PKG_NAME}.h"));
+  .write_to_file(output_file_path);
+}
+
+fn include_dir<P>(path: P) -> io::Result<Vec<String>>
+where
+  P: AsRef<Path>,
+{
+  let dir = path.as_ref().read_dir()?;
+  let folders = dir.filter_map(Result::ok).filter(|entry| {
+    entry.file_type().is_ok_and(|file_type| file_type.is_dir())
+      && entry.path().join("include").exists()
+  });
+
+  Ok(
+    folders
+      .map(|entry| format!("-I{}", entry.path().join("include").display()))
+      .collect(),
+  )
 }
