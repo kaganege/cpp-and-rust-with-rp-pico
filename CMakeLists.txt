@@ -28,6 +28,22 @@ set(PICO_BOARD pico CACHE STRING "Board type")
 {% else %}
 set(PICO_BOARD pico_w CACHE STRING "Board type")
 {% endif %}
+set(CARGO_ARGS "build")
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(LIB_BUILD_TYPE "debug")
+elseif(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+  set(LIB_BUILD_TYPE "release")
+else()
+  set(LIB_BUILD_TYPE "debug")
+endif()
+
+if(${LIB_BUILD_TYPE} STREQUAL "release")
+  list(APPEND CARGO_ARGS "--release")
+endif()
+
+set(LIB_FILE "${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/${LIB_BUILD_TYPE}/librusty.a")
+
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
@@ -69,24 +85,16 @@ target_include_directories({{ project-name }} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )
 
-# Enable ExternalProject CMake module
-include(ExternalProject)
-
-# Set default ExternalProject root directory
-set_directory_properties(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/Rust)
-
 # Add Rust project
-ExternalProject_Add(rusty
-  BUILD_COMMAND cargo build
-  COMMAND cargo build --release
-  BINARY_DIR "${CMAKE_SOURCE_DIR}/rusty"
-  LOG_BUILD ON
+add_custom_command(
+  OUTPUT ${LIB_FILE}
+  COMMAND cargo ARGS ${CARGO_ARGS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/rusty
+  COMMENT "running cargo"
 )
 
-# execute_process(
-#   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/rusty
-#   COMMAND cargo build --release
-# )
+# Create rust project
+add_custom_target(rusty ALL DEPENDS ${LIB_FILE})
 
 # Create dependency
 add_dependencies({{ project-name }} rusty)
@@ -96,8 +104,8 @@ target_link_libraries({{ project-name }}
   {% if board_type == "Pico W" %}
   pico_cyw43_arch_none
   {% endif %}
-  debug "${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/debug/librusty.a"
-  optimized "${CMAKE_SOURCE_DIR}/rusty/target/thumbv6m-none-eabi/release/librusty.a"
+  hardware_timer
+  ${LIB_FILE}
 )
 
 pico_add_extra_outputs({{ project-name }})
