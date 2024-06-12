@@ -19,7 +19,6 @@ bindgen = "0.69.4"
 cbindgen = { version = "0.26.0", default-features = false }
 
 [dependencies]
-cortex-m = "0.7.7"
 custom-print = { version = "1.0.0", default-features = false, features = [
   "alloc",
 ] }
