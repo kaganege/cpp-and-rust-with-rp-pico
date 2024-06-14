@@ -78,6 +78,47 @@ fn main() {
         .join("include")
         .display()
     ),
+    format!(
+      "-I{}",
+      pico_sdk_path
+        .join("lib")
+        .join("cyw43-driver")
+        .join("src")
+        .display()
+    ),
+    format!(
+      "-I{}",
+      pico_sdk_path
+        .join("lib")
+        .join("btstack")
+        .join("src")
+        .display()
+    ),
+    format!(
+      "-I{}",
+      pico_sdk_path
+        .join("lib")
+        .join("lwip")
+        .join("src")
+        .join("include")
+        .display()
+    ),
+    format!(
+      "-I{}",
+      pico_sdk_path
+        .join("lib")
+        .join("mbedtls")
+        .join("include")
+        .display()
+    ),
+    format!(
+      "-I{}",
+      pico_sdk_path
+        .join("lib")
+        .join("tinyusb")
+        .join("include")
+        .display()
+    ),
     format!("-I{}", project_path.display()),
   ]);
   builder = builder.clang_args(
