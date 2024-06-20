@@ -55,7 +55,6 @@ fn main() {
     .header("wrapper.h")
     .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
-  // C:\Users\kagan\.pico-sdk\toolchain\13_2_Rel1\arm-none-eabi\include
   builder = builder.clang_args([
     format!(
       "-I{}",
