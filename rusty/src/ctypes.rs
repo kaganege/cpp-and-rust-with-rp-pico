@@ -3,14 +3,18 @@
 pub use alloc::ffi::*;
 pub use core::ffi::*;
 
-pub type CResult = Result<(), c_int>;
+pub type CResult<T = ()> = Result<T, c_int>;
 
 pub trait ToResult {
-  fn to_result(&self) -> CResult;
+  type Type;
+
+  fn to_result(&self) -> CResult<Self::Type>;
 }
 
 impl ToResult for c_int {
-  fn to_result(&self) -> CResult {
+  type Type = ();
+
+  fn to_result(&self) -> CResult<Self::Type> {
     if self.is_positive() {
       Err(*self)
     } else {

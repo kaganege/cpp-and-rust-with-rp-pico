@@ -55,7 +55,6 @@ fn main() {
     .header("wrapper.h")
     .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
-  // C:\Users\kagan\.pico-sdk\toolchain\13_2_Rel1\arm-none-eabi\include
   builder = builder.clang_args([
     format!(
       "-I{}",
@@ -75,6 +74,47 @@ fn main() {
       pico_sdk_path
         .join("src")
         .join("boards")
+        .join("include")
+        .display()
+    ),
+    format!(
+      "-I{}",
+      pico_sdk_path
+        .join("lib")
+        .join("cyw43-driver")
+        .join("src")
+        .display()
+    ),
+    format!(
+      "-I{}",
+      pico_sdk_path
+        .join("lib")
+        .join("btstack")
+        .join("src")
+        .display()
+    ),
+    format!(
+      "-I{}",
+      pico_sdk_path
+        .join("lib")
+        .join("lwip")
+        .join("src")
+        .join("include")
+        .display()
+    ),
+    format!(
+      "-I{}",
+      pico_sdk_path
+        .join("lib")
+        .join("mbedtls")
+        .join("include")
+        .display()
+    ),
+    format!(
+      "-I{}",
+      pico_sdk_path
+        .join("lib")
+        .join("tinyusb")
         .join("include")
         .display()
     ),
