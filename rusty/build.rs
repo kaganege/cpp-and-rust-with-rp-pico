@@ -115,7 +115,7 @@ fn main() {
       pico_sdk_path
         .join("lib")
         .join("tinyusb")
-        .join("include")
+        .join("src")
         .display()
     ),
     format!("-I{}", project_path.display()),
