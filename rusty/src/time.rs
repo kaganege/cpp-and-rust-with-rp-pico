@@ -4,12 +4,17 @@ use core::fmt;
 use core::ops::{Add, AddAssign, Sub, SubAssign};
 pub use core::time::*;
 
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Instant(Duration);
 
 impl Instant {
   #[must_use]
   pub fn now() -> Instant {
     Instant(Duration::from_micros(unsafe { super::time_us_64() }))
+  }
+
+  pub fn elapsed(&self) -> Duration {
+    Instant::now() - *self
   }
 
   pub fn duration_since(&self, earlier: Instant) -> Duration {
